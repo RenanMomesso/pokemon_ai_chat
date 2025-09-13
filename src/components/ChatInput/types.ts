@@ -1,5 +1,4 @@
 export interface ChatInputProps {
-  // Props interface for ChatInput component
 }
 
 export interface ChatInputState {

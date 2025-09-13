@@ -28,12 +28,12 @@ export interface AIServiceInterface {
   generateResponse(messages: Message[]): Promise<string>;
 }
 
-export interface AnthropicMessage {
+export interface AIMessage {
   role: 'user' | 'assistant';
   content: string;
 }
 
-export interface AnthropicTool {
+export interface AITool {
   name: string;
   description: string;
   input_schema: any;

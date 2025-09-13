@@ -1,38 +1,20 @@
-// Export all Pokemon tools
 export {
   pokemonLookupTool,
   pokemonSearchTool,
-  pokemonByTypeTool,
   randomPokemonTool,
-  teamAnalysisTool,
+  pokemonStrengthTool,
   pokemonTools
 } from './pokemonTools';
 
-// Export configuration
-export {
-  POKEMON_TOOLS_CONFIG,
-  POKEMON_TOOLS_ERRORS,
-  POKEMON_TOOLS_MESSAGES
-} from './pokemonTools.config';
-
-// Export types
 export type {
-  PokemonLookupParams,
-  PokemonSearchParams,
-  PokemonByTypeParams,
-  RandomPokemonParams,
-  TeamAnalysisParams,
-  ToolExecutionResult,
-  ToolParameter,
-  ToolParameters,
-  Tool,
-  PokemonToolsConfig,
-  TeamStats,
-  TeamRecommendation,
-  ExtendedTeamAnalysis,
-  PokemonToolParams,
-  PokemonToolName
+  PokemonToolName,
+  ToolExecutionResult
 } from './types';
 
-// Default export for convenience
+export {
+  POKEMON_CONFIG,
+  POKEMON_ERRORS,
+  POKEMON_MESSAGES
+} from './pokemonTools.config';
+
 export { pokemonTools as default } from './pokemonTools';

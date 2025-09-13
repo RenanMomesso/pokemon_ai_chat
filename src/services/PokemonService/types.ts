@@ -1,56 +1,75 @@
-import { Pokemon, PokemonSpecies } from '../../types';
-
-export interface PokemonServiceConfig {
-  baseUrl: string;
-  cacheEnabled: boolean;
-  defaultLimit: number;
-  maxPokemonId: number;
-}
-
-export interface PokemonServiceInterface {
-  fetchPokemon(nameOrId: string | number): Promise<Pokemon>;
-  fetchPokemonSpecies(nameOrId: string | number): Promise<PokemonSpecies>;
-  searchPokemon(query: string, limit?: number): Promise<Pokemon[]>;
-  getRandomPokemon(): Promise<Pokemon>;
-  getPokemonByType(typeName: string): Promise<Pokemon[]>;
-  formatPokemonInfo(pokemon: Pokemon): string;
-  formatPokemonWithDescription(pokemon: Pokemon): Promise<string>;
-  clearCache(): void;
-}
-
-export interface PokemonSearchResult {
+export interface Pokemon {
+  id: number;
   name: string;
-  url: string;
+  height: number;
+  weight: number;
+  types: Array<{
+    type: {
+      name: string;
+      url: string;
+    };
+  }>;
+  abilities: Array<{
+    ability: {
+      name: string;
+      url: string;
+    };
+  }>;
+  stats: Array<{
+    base_stat: number;
+    stat: {
+      name: string;
+      url: string;
+    };
+  }>;
+  base_experience: number;
+}
+
+export interface PokemonSpecies {
+  id: number;
+  name: string;
+  flavor_text_entries: Array<{
+    flavor_text: string;
+    language: {
+      name: string;
+    };
+  }>;
+  genera: Array<{
+    genus: string;
+    language: {
+      name: string;
+    };
+  }>;
+}
+
+export interface PokemonType {
+  id: number;
+  name: string;
+  pokemon: Array<{
+    pokemon: {
+      name: string;
+      url: string;
+    };
+  }>;
+}
+
+export interface PokemonAbility {
+  id: number;
+  name: string;
+  effect_entries: Array<{
+    effect: string;
+    language: {
+      name: string;
+    };
+  }>;
 }
 
 export interface PokemonListResponse {
   count: number;
   next: string | null;
   previous: string | null;
-  results: PokemonSearchResult[];
-}
-
-export interface TypeResponse {
-  id: number;
-  name: string;
-  pokemon: {
-    pokemon: {
-      name: string;
-      url: string;
-    };
-    slot: number;
-  }[];
-}
-
-export interface CacheEntry<T> {
-  data: T;
-  timestamp: number;
-  expiresAt: number;
-}
-
-export interface PokemonFormattingOptions {
-  includeDescription?: boolean;
-  includeStats?: boolean;
-  includeAbilities?: boolean;
-  includeTypes?: boolean;
+  results: Array<{
+    name: string;
+    url: string;
+  }>;
 }

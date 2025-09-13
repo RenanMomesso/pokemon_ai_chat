@@ -4,15 +4,12 @@ import { Alert } from 'react-native';
 import { ChatInput } from './ChatInput';
 import { useChat } from '../../contexts/ChatContext';
 
-// Mock the useChat hook
-jest.mock('../../contexts/ChatContext/ChatContext', () => ({
+jest.mock('../../contexts/ChatContext', () => ({
   useChat: jest.fn(),
 }));
 
-// Mock Alert
 jest.spyOn(Alert, 'alert');
 
-// Mock Ionicons
 jest.mock('@expo/vector-icons', () => ({
   Ionicons: 'Ionicons',
 }));
@@ -26,21 +23,19 @@ describe('ChatInput', () => {
     jest.clearAllMocks();
     mockUseChat.mockReturnValue({
       sendMessage: mockSendMessage,
-      state: {
-        isLoading: false,
-        messages: [],
-        error: null,
-      },
+      isLoading: false,
+      messages: [],
+      error: null,
       clearMessages: jest.fn(),
       loadMessages: jest.fn(),
     });
   });
 
   it('renders correctly', () => {
-    const { getByPlaceholderText, getByRole } = render(<ChatInput />);
+    const { getByPlaceholderText, getByTestId } = render(<ChatInput />);
     
     expect(getByPlaceholderText('Ask me about Pokémon...')).toBeTruthy();
-    expect(getByRole('button')).toBeTruthy();
+    expect(getByTestId('send-button')).toBeTruthy();
   });
 
   it('updates message state when typing', () => {
@@ -52,9 +47,9 @@ describe('ChatInput', () => {
   });
 
   it('sends message when send button is pressed', async () => {
-    const { getByPlaceholderText, getByRole } = render(<ChatInput />);
+    const { getByPlaceholderText, getByTestId } = render(<ChatInput />);
     const textInput = getByPlaceholderText('Ask me about Pokémon...');
-    const sendButton = getByRole('button');
+    const sendButton = getByTestId('send-button');
     
     fireEvent.changeText(textInput, 'Tell me about Pikachu');
     fireEvent.press(sendButton);
@@ -65,8 +60,8 @@ describe('ChatInput', () => {
   });
 
   it('does not send empty message', () => {
-    const { getByRole } = render(<ChatInput />);
-    const sendButton = getByRole('button');
+    const { getByTestId } = render(<ChatInput />);
+    const sendButton = getByTestId('send-button');
     
     fireEvent.press(sendButton);
     
@@ -76,29 +71,27 @@ describe('ChatInput', () => {
   it('disables input when loading', () => {
     mockUseChat.mockReturnValue({
       sendMessage: mockSendMessage,
-      state: {
-        isLoading: true,
-        messages: [],
-        error: null,
-      },
+      isLoading: true,
+      messages: [],
+      error: null,
       clearMessages: jest.fn(),
       loadMessages: jest.fn(),
     });
 
-    const { getByPlaceholderText, getByRole } = render(<ChatInput />);
+    const { getByPlaceholderText, getByTestId } = render(<ChatInput />);
     const textInput = getByPlaceholderText('Ask me about Pokémon...');
-    const sendButton = getByRole('button');
+    const sendButton = getByTestId('send-button');
     
     expect(textInput.props.editable).toBe(false);
-    expect(sendButton.props.disabled).toBe(true);
+    expect(sendButton.props.accessibilityState.disabled).toBe(true);
   });
 
   it('shows error alert when send fails', async () => {
     mockSendMessage.mockRejectedValueOnce(new Error('Network error'));
     
-    const { getByPlaceholderText, getByRole } = render(<ChatInput />);
+    const { getByPlaceholderText, getByTestId } = render(<ChatInput />);
     const textInput = getByPlaceholderText('Ask me about Pokémon...');
-    const sendButton = getByRole('button');
+    const sendButton = getByTestId('send-button');
     
     fireEvent.changeText(textInput, 'Test message');
     fireEvent.press(sendButton);
@@ -112,9 +105,9 @@ describe('ChatInput', () => {
   });
 
   it('clears message after successful send', async () => {
-    const { getByPlaceholderText, getByRole } = render(<ChatInput />);
+    const { getByPlaceholderText, getByTestId } = render(<ChatInput />);
     const textInput = getByPlaceholderText('Ask me about Pokémon...');
-    const sendButton = getByRole('button');
+    const sendButton = getByTestId('send-button');
     
     fireEvent.changeText(textInput, 'Test message');
     fireEvent.press(sendButton);

@@ -1,5 +1,3 @@
-// Error handling utilities
-
 export class APIError extends Error {
   public statusCode: number;
   
@@ -24,7 +22,6 @@ export class ValidationError extends Error {
   }
 }
 
-// Error handling wrapper function
 export async function withErrorHandling<T>(
   operation: () => Promise<T>,
   context: string = 'Operation'
@@ -36,10 +33,8 @@ export async function withErrorHandling<T>(
       throw error;
     }
     
-    // Log the error for debugging
     console.error(`${context} failed:`, error);
     
-    // Re-throw as APIError
     throw new APIError(
       `${context} failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
       500
@@ -47,7 +42,6 @@ export async function withErrorHandling<T>(
   }
 }
 
-// Error logging utility
 export function logError(error: Error, context?: string): void {
   const timestamp = new Date().toISOString();
   const contextStr = context ? `[${context}] ` : '';

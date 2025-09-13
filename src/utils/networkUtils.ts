@@ -1,5 +1,3 @@
-// Network utility functions for API calls
-
 export interface NetworkUtilsInterface {
   fetchWithRetry(url: string, options?: RequestInit, maxRetries?: number): Promise<Response>;
 }
@@ -30,7 +28,6 @@ export class NetworkUtils implements NetworkUtilsInterface {
           throw lastError;
         }
         
-        // Wait before retrying (exponential backoff)
         const delay = Math.pow(2, attempt - 1) * 1000;
         await new Promise(resolve => setTimeout(resolve, delay));
       }
@@ -40,5 +37,4 @@ export class NetworkUtils implements NetworkUtilsInterface {
   }
 }
 
-// Export singleton instance
 export const networkUtils = new NetworkUtils();

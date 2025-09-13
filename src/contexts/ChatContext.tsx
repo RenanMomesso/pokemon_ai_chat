@@ -1,8 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useQueryClient } from '@tanstack/react-query';
 import React, { createContext, useCallback, useContext, useEffect, useReducer } from 'react';
-import { v4 as uuidv4 } from 'uuid';
-import { usePrefetchPokemon } from '../hooks/usePokemonQueries';
 import { aiService } from '../services/AIService';
 import { pokemonTools } from '../tools';
 import { prefetchPokemonFromMessage } from '../utils/pokemonPrefetch';
@@ -21,14 +19,12 @@ import {
   ToolCall
 } from './types';
 
-// Initial state
 const initialState: ChatState = {
   messages: [],
   isLoading: false,
   error: null
 };
 
-// Chat reducer
 function chatReducer(state: ChatState, action: ChatAction): ChatState {
   switch (action.type) {
     case 'ADD_MESSAGE':
@@ -90,48 +86,39 @@ function chatReducer(state: ChatState, action: ChatAction): ChatState {
   }
 }
 
-// Create context
 const ChatContext = createContext<ChatContextType | undefined>(undefined);
 
-// Chat provider component
 export function ChatProvider({ children }: ChatProviderProps) {
   const [state, dispatch] = useReducer(chatReducer, initialState);
   const queryClient = useQueryClient();
-  const prefetchPokemon = usePrefetchPokemon();
 
-  // Register Pokemon tools with AI service
   useEffect(() => {
     pokemonTools.forEach(tool => {
       aiService.registerTool(tool);
     });
   }, []);
 
-  // Save messages to storage and query cache
   const saveMessages = useCallback(async (messages: Message[]) => {
     if (!CHAT_CONFIG.enablePersistence) return;
     
     try {
       await AsyncStorage.setItem(STORAGE_KEYS.MESSAGES, JSON.stringify(messages));
-      // Also cache in TanStack Query for faster access
       queryClient.setQueryData(['chat', 'messages'], messages);
     } catch (error) {
       console.error('Failed to save messages:', error);
     }
   }, [queryClient]);
 
-  // Load messages from storage or query cache
   const loadMessages = useCallback(async () => {
     if (!CHAT_CONFIG.enablePersistence) return;
     
     try {
-      // First try to get from query cache
       const cachedMessages = queryClient.getQueryData<Message[]>(['chat', 'messages']);
       if (cachedMessages) {
         dispatch({ type: 'SET_MESSAGES', payload: cachedMessages });
         return;
       }
       
-      // Fallback to AsyncStorage
       const stored = await AsyncStorage.getItem(STORAGE_KEYS.MESSAGES);
       if (stored) {
         const messages: Message[] = JSON.parse(stored).map((msg: any) => ({
@@ -139,7 +126,6 @@ export function ChatProvider({ children }: ChatProviderProps) {
           timestamp: new Date(msg.timestamp)
         }));
         dispatch({ type: 'SET_MESSAGES', payload: messages });
-        // Cache for next time
         queryClient.setQueryData(['chat', 'messages'], messages);
       }
     } catch (error) {
@@ -148,13 +134,11 @@ export function ChatProvider({ children }: ChatProviderProps) {
     }
   }, [queryClient]);
 
-  // Clear messages
   const clearMessages = useCallback(async () => {
     try {
       dispatch({ type: 'CLEAR_MESSAGES' });
       if (CHAT_CONFIG.enablePersistence) {
         await AsyncStorage.removeItem(STORAGE_KEYS.MESSAGES);
-        // Also clear from query cache
         queryClient.removeQueries({ queryKey: ['chat', 'messages'] });
       }
     } catch (error) {
@@ -163,7 +147,6 @@ export function ChatProvider({ children }: ChatProviderProps) {
     }
   }, [queryClient]);
 
-  // Execute tool call
   const executeToolCall = useCallback(async (toolCall: ToolCall): Promise<string> => {
     try {
       const tool = pokemonTools.find(t => t.name === toolCall.name);
@@ -180,7 +163,6 @@ export function ChatProvider({ children }: ChatProviderProps) {
   }, []);
 
   const randomId = () => new Date().getTime().toString()
-  // Send message
   const sendMessage = useCallback(async (content: string) => {
     if (!content.trim()) return;
     console.log("send message")
@@ -200,18 +182,15 @@ export function ChatProvider({ children }: ChatProviderProps) {
       isStreaming: true
     };
 
-    // Add user message
     dispatch({ type: 'ADD_MESSAGE', payload: userMessage });
     dispatch({ type: 'SET_LOADING', payload: true });
     
-    // Prefetch Pokemon data based on user message
     try {
       await prefetchPokemonFromMessage(queryClient, content.trim());
     } catch (error) {
       console.warn('Prefetch failed:', error);
     }
     
-    // Add AI message placeholder
     dispatch({ type: 'ADD_MESSAGE', payload: aiMessage });
 
     try {
@@ -219,7 +198,6 @@ export function ChatProvider({ children }: ChatProviderProps) {
       let fullResponse = '';
       let currentToolCalls: ToolCall[] = [];
 
-      // Stream response from AI
       for await (const chunk of aiService.streamResponse(messages)) {
         if (chunk.type === 'text') {
           fullResponse += chunk.content;
@@ -232,7 +210,7 @@ export function ChatProvider({ children }: ChatProviderProps) {
           });
         } else if (chunk.type === 'tool_call') {
           const toolCall: ToolCall = {
-            id: uuidv4(),
+            id: randomId(),
             name: chunk.name,
             args: chunk.args
           };
@@ -262,13 +240,11 @@ export function ChatProvider({ children }: ChatProviderProps) {
         }
       }
 
-      // Mark streaming as complete
       dispatch({
         type: 'SET_STREAMING',
         payload: { id: aiMessage.id, isStreaming: false }
       });
 
-      // Save updated messages
       const updatedMessages = [...messages, { ...aiMessage, content: fullResponse, isStreaming: false, toolCalls: currentToolCalls }];
       await saveMessages(updatedMessages);
 
@@ -293,12 +269,10 @@ export function ChatProvider({ children }: ChatProviderProps) {
     }
   }, [state.messages, saveMessages, executeToolCall]);
 
-  // Load messages on mount
   useEffect(() => {
     loadMessages();
   }, [loadMessages]);
 
-  // Save messages when they change
   useEffect(() => {
     if (state.messages.length > 0) {
       saveMessages(state.messages);
@@ -320,7 +294,6 @@ export function ChatProvider({ children }: ChatProviderProps) {
   );
 }
 
-// Custom hook to use chat context
 export function useChat(): ChatContextType {
   const context = useContext(ChatContext);
   if (context === undefined) {

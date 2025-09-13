@@ -1,8 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import React from 'react';
 import {
-  KeyboardAvoidingView,
-  Platform,
   TextInput,
   TouchableOpacity,
   View,
@@ -17,10 +15,7 @@ export function ChatInput(props: ChatInputProps) {
   const { isLoading } = useChat();
 
   return (
-    <KeyboardAvoidingView
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      style={styles.container}
-    >
+    <View style={[styles.container]}>
       <View style={styles.inputContainer}>
         <TextInput
           style={styles.textInput}
@@ -31,7 +26,6 @@ export function ChatInput(props: ChatInputProps) {
           multiline
           maxLength={1000}
           editable={!isLoading}
-          onSubmitEditing={handleSend}
           blurOnSubmit={false}
         />
         
@@ -43,6 +37,7 @@ export function ChatInput(props: ChatInputProps) {
           onPress={handleSend}
           disabled={isDisabled}
           activeOpacity={0.7}
+          testID="send-button"
         >
           <Ionicons
             name={isLoading ? 'hourglass' : 'send'}
@@ -51,6 +46,6 @@ export function ChatInput(props: ChatInputProps) {
           />
         </TouchableOpacity>
       </View>
-    </KeyboardAvoidingView>
+    </View>
   );
 }

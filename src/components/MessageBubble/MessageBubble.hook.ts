@@ -1,27 +1,26 @@
 import React from 'react';
-import { Animated } from 'react-native';
-import { MessageBubbleProps, MessageBubbleHook, StreamingDotsHook } from './types';
+import { useAnimatedStyle, useSharedValue, withRepeat, withSequence, withSpring, withTiming } from 'react-native-reanimated';
+import { MessageBubbleHook, MessageBubbleProps } from './types';
 
 export const useMessageBubble = ({ message }: MessageBubbleProps): MessageBubbleHook => {
   const isUser = message.role === 'user';
-  const fadeAnim = React.useRef(new Animated.Value(0)).current;
-  const scaleAnim = React.useRef(new Animated.Value(0.8)).current;
+  const opacity = useSharedValue(0);
+  const scale = useSharedValue(0.8);
 
   React.useEffect(() => {
-    Animated.parallel([
-      Animated.timing(fadeAnim, {
-        toValue: 1,
-        duration: 300,
-        useNativeDriver: true,
-      }),
-      Animated.spring(scaleAnim, {
-        toValue: 1,
-        tension: 100,
-        friction: 8,
-        useNativeDriver: true,
-      }),
-    ]).start();
+    opacity.value = withTiming(1, { duration: 300 });
+    scale.value = withSpring(1, {
+      damping: 15,
+      stiffness: 150,
+    });
   }, []);
+
+  const animatedStyle = useAnimatedStyle(() => {
+    return {
+      opacity: opacity.value,
+      transform: [{ scale: scale.value }],
+    };
+  });
 
   const formatTime = (date: Date) => {
     return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
@@ -29,37 +28,68 @@ export const useMessageBubble = ({ message }: MessageBubbleProps): MessageBubble
 
   return {
     isUser,
-    fadeAnim,
-    scaleAnim,
+    animatedStyle,
     formatTime,
   };
 };
 
-export const useStreamingDots = (): StreamingDotsHook => {
-  const dot1 = React.useRef(new Animated.Value(0)).current;
-  const dot2 = React.useRef(new Animated.Value(0)).current;
-  const dot3 = React.useRef(new Animated.Value(0)).current;
+export const useStreamingDots = () => {
+  const dot1Opacity = useSharedValue(0);
+  const dot2Opacity = useSharedValue(0);
+  const dot3Opacity = useSharedValue(0);
 
   React.useEffect(() => {
     const animateDots = () => {
-      const sequence = Animated.sequence([
-        Animated.timing(dot1, { toValue: 1, duration: 300, useNativeDriver: true }),
-        Animated.timing(dot2, { toValue: 1, duration: 300, useNativeDriver: true }),
-        Animated.timing(dot3, { toValue: 1, duration: 300, useNativeDriver: true }),
-        Animated.timing(dot1, { toValue: 0, duration: 300, useNativeDriver: true }),
-        Animated.timing(dot2, { toValue: 0, duration: 300, useNativeDriver: true }),
-        Animated.timing(dot3, { toValue: 0, duration: 300, useNativeDriver: true }),
-      ]);
-
-      Animated.loop(sequence).start();
+      dot1Opacity.value = withRepeat(
+        withSequence(
+          withTiming(1, { duration: 300 }),
+          withTiming(0, { duration: 300 })
+        ),
+        -1,
+        false
+      );
+      
+      setTimeout(() => {
+        dot2Opacity.value = withRepeat(
+          withSequence(
+            withTiming(1, { duration: 300 }),
+            withTiming(0, { duration: 300 })
+          ),
+          -1,
+          false
+        );
+      }, 100);
+      
+      setTimeout(() => {
+        dot3Opacity.value = withRepeat(
+          withSequence(
+            withTiming(1, { duration: 300 }),
+            withTiming(0, { duration: 300 })
+          ),
+          -1,
+          false
+        );
+      }, 200);
     };
 
     animateDots();
   }, []);
 
+  const dot1Style = useAnimatedStyle(() => ({
+    opacity: dot1Opacity.value,
+  }));
+
+  const dot2Style = useAnimatedStyle(() => ({
+    opacity: dot2Opacity.value,
+  }));
+
+  const dot3Style = useAnimatedStyle(() => ({
+    opacity: dot3Opacity.value,
+  }));
+
   return {
-    dot1,
-    dot2,
-    dot3,
+    dot1Style,
+    dot2Style,
+    dot3Style,
   };
 };

@@ -25,6 +25,11 @@ jest.mock('expo-constants', () => ({
   },
 }));
 
+// Mock expo/fetch globally
+jest.mock('expo/fetch', () => ({
+  fetch: jest.fn(),
+}));
+
 jest.mock('expo-router', () => ({
   useRouter: () => ({
     push: jest.fn(),

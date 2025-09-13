@@ -1,8 +1,6 @@
-import { AIService } from './AIService';
 import { Message, Tool } from '../../types';
-import { APIError, NetworkError } from '../../utils/errorHandler';
+import { AIService } from './AIService';
 
-// Mock Anthropic SDK
 jest.mock('@anthropic-ai/sdk', () => {
   return {
     __esModule: true,
@@ -14,15 +12,24 @@ jest.mock('@anthropic-ai/sdk', () => {
   };
 });
 
-// Mock environment variables
-jest.mock('@env', () => ({
-  ANTHROPIC_API_KEY: 'test-api-key',
+
+
+jest.mock('expo/fetch', () => ({
+  fetch: jest.fn(),
 }));
 
-// Mock utils
 jest.mock('../../utils/errorHandler', () => ({
-  APIError: jest.fn(),
-  NetworkError: jest.fn(),
+  APIError: jest.fn().mockImplementation((message, code) => {
+    const error = new Error(message);
+    error.name = 'APIError';
+    error.code = code;
+    return error;
+  }),
+  NetworkError: jest.fn().mockImplementation((message) => {
+    const error = new Error(message);
+    error.name = 'NetworkError';
+    return error;
+  }),
   withErrorHandling: jest.fn((fn) => fn()),
   handleError: jest.fn((error) => error.message),
 }));
@@ -68,7 +75,7 @@ describe('AIService', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    aiService = new AIService();
+    aiService = new AIService('test-api-key');
     mockAnthropic = require('@anthropic-ai/sdk').default;
   });
 
@@ -93,56 +100,50 @@ describe('AIService', () => {
         ],
       };
 
-      mockAnthropic.mockImplementation(() => ({
-        messages: {
-          create: jest.fn().mockResolvedValue(mockResponse),
-        },
-      }));
+      const mockFetch = require('expo/fetch').fetch;
+      mockFetch.mockResolvedValue({
+        ok: true,
+        json: jest.fn().mockResolvedValue(mockResponse),
+      });
 
-      aiService = new AIService();
+      aiService = new AIService('test-api-key');
       const result = await aiService.generateResponse(mockMessages);
       
       expect(result).toBe('Test response');
     });
 
     it('should handle API errors', async () => {
-      const error = new Error('401 Unauthorized');
-      
-      mockAnthropic.mockImplementation(() => ({
-        messages: {
-          create: jest.fn().mockRejectedValue(error),
-        },
-      }));
+      const mockFetch = require('expo/fetch').fetch;
+      mockFetch.mockResolvedValue({
+        ok: false,
+        status: 401,
+        statusText: 'Unauthorized',
+      });
 
-      aiService = new AIService();
+      aiService = new AIService('test-api-key');
       
       await expect(aiService.generateResponse(mockMessages)).rejects.toThrow();
     });
 
     it('should handle rate limit errors', async () => {
-      const error = new Error('429 Rate Limited');
-      
-      mockAnthropic.mockImplementation(() => ({
-        messages: {
-          create: jest.fn().mockRejectedValue(error),
-        },
-      }));
+      const mockFetch = require('expo/fetch').fetch;
+      mockFetch.mockResolvedValue({
+        ok: false,
+        status: 429,
+        statusText: 'Rate Limited',
+        json: jest.fn().mockResolvedValue({})
+      });
 
-      aiService = new AIService();
+      aiService = new AIService('test-api-key');
       
       await expect(aiService.generateResponse(mockMessages)).rejects.toThrow();
     });
 
     it('should handle network errors', async () => {
-      const error = new Error('network error');
-      
-      mockAnthropic.mockImplementation(() => ({
-        messages: {
-          create: jest.fn().mockRejectedValue(error),
-        },
-      }));
+      const mockFetch = require('expo/fetch').fetch;
+      mockFetch.mockRejectedValue(new Error('fetch failed: network error'));
 
-      aiService = new AIService();
+      aiService = new AIService('test-api-key');
       
       await expect(aiService.generateResponse(mockMessages)).rejects.toThrow();
     });
@@ -161,14 +162,14 @@ describe('AIService', () => {
         },
       ];
 
-      const converted = aiService['convertMessagesToAnthropic'](messagesWithSystem);
+      const converted = aiService['convertMessagesToAPI'](messagesWithSystem);
       expect(converted).toHaveLength(2);
       expect(converted.every(msg => msg.role !== 'system')).toBe(true);
     });
 
     it('should convert tools to Anthropic format', () => {
       aiService.registerTool(mockTool);
-      const converted = aiService['convertToolsToAnthropic']();
+      const converted = aiService['convertToolsToAPI']();
       
       expect(converted).toHaveLength(1);
       expect(converted[0]).toEqual({

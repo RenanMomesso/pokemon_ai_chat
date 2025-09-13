@@ -46,7 +46,7 @@ export const useChatScreen = (): ChatScreenHook => {
       <Ionicons name="chatbubbles-outline" size={64} color="#CCC" />
       <Text style={styles.emptyStateTitle}>Welcome to PokéChat!</Text>
       <Text style={styles.emptyStateSubtitle}>
-        I'm your AI-powered Pokédex assistant. Ask me anything about Pokémon!
+        I&apos;m your AI-powered Pokédex assistant. Ask me anything about Pokémon!
       </Text>
       <View style={styles.suggestionsContainer}>
         <Text style={styles.suggestionsTitle}>Try asking:</Text>
@@ -71,6 +71,7 @@ export const useChatScreen = (): ChatScreenHook => {
           style={styles.clearButton}
           onPress={handleClearChat}
           activeOpacity={0.7}
+          testID="clear-button"
         >
           <Ionicons name="trash-outline" size={20} color="#FF3B30" />
         </TouchableOpacity>

@@ -1,7 +1,5 @@
-// Export ChatContext components and hooks
 export { ChatProvider, useChat } from './ChatContext';
 
-// Export configuration
 export {
   CHAT_CONFIG,
   CHAT_ERRORS,
@@ -11,7 +9,6 @@ export {
   TIMING
 } from './ChatContext.config';
 
-// Export types
 export type {
   Message,
   ToolCall,

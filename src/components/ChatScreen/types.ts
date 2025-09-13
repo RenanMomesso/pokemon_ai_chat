@@ -2,7 +2,6 @@ import { ReactElement } from "react";
 import { Message } from "../../types";
 
 export interface ChatScreenProps {
-  // Props interface for ChatScreen component
 }
 
 

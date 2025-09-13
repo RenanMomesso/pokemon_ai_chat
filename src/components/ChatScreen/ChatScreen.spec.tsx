@@ -1,12 +1,18 @@
 import React from 'react';
 import { render, fireEvent, waitFor } from '@testing-library/react-native';
 import { Alert } from 'react-native';
-import { ChatScreen } from './ChatScreen';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import ChatScreen from './ChatScreen';
 import { useChat } from '../../contexts/ChatContext';
 
 // Mock the useChat hook
-jest.mock('../../contexts/ChatContext/ChatContext', () => ({
+jest.mock('../../contexts/ChatContext', () => ({
   useChat: jest.fn(),
+}));
+
+// Mock SafeAreaView
+jest.mock('react-native-safe-area-context', () => ({
+  SafeAreaView: ({ children }: any) => children,
 }));
 
 // Mock Alert
@@ -19,18 +25,37 @@ jest.mock('@expo/vector-icons', () => ({
 
 // Mock MessageBubble and ChatInput components
 jest.mock('../MessageBubble', () => ({
-  MessageBubble: ({ message }: any) => `MessageBubble-${message.id}`,
+  MessageBubble: ({ message }: any) => {
+    const React = require('react');
+    const { Text } = require('react-native');
+    return React.createElement(Text, {}, `MessageBubble-${message.id}`);
+  },
 }));
 
 jest.mock('../ChatInput', () => ({
-  ChatInput: () => 'ChatInput',
+  ChatInput: () => {
+    const React = require('react');
+    const { Text } = require('react-native');
+    return React.createElement(Text, {}, 'ChatInput');
+  },
 }));
 
 const mockUseChat = useChat as jest.MockedFunction<typeof useChat>;
 
 describe('ChatScreen', () => {
+  let queryClient: QueryClient;
   const mockLoadMessages = jest.fn();
   const mockClearMessages = jest.fn();
+
+  beforeEach(() => {
+    queryClient = new QueryClient({
+      defaultOptions: {
+        queries: {
+          retry: false,
+        },
+      },
+    });
+  });
   
   const mockMessages = [
     {
@@ -50,19 +75,20 @@ describe('ChatScreen', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockUseChat.mockReturnValue({
-      state: {
-        messages: [],
-        isLoading: false,
-        error: null,
-      },
-      loadMessages: mockLoadMessages,
-      clearMessages: mockClearMessages,
+      messages: [],
+      isLoading: false,
+      error: null,
       sendMessage: jest.fn(),
+      clearMessages: mockClearMessages,
     });
   });
 
   it('renders correctly with empty state', () => {
-    const { getByText } = render(<ChatScreen />);
+    const { getByText } = render(
+      <QueryClientProvider client={queryClient}>
+        <ChatScreen />
+      </QueryClientProvider>
+    );
     
     expect(getByText('PokéChat')).toBeTruthy();
     expect(getByText('Welcome to PokéChat!')).toBeTruthy();
@@ -71,17 +97,18 @@ describe('ChatScreen', () => {
 
   it('renders messages when available', () => {
     mockUseChat.mockReturnValue({
-      state: {
-        messages: mockMessages,
-        isLoading: false,
-        error: null,
-      },
-      loadMessages: mockLoadMessages,
-      clearMessages: mockClearMessages,
+      messages: mockMessages,
+      isLoading: false,
+      error: null,
       sendMessage: jest.fn(),
+      clearMessages: mockClearMessages,
     });
 
-    const { getByText } = render(<ChatScreen />);
+    const { getByText } = render(
+      <QueryClientProvider client={queryClient}>
+        <ChatScreen />
+      </QueryClientProvider>
+    );
     
     expect(getByText('MessageBubble-1')).toBeTruthy();
     expect(getByText('MessageBubble-2')).toBeTruthy();
@@ -89,65 +116,64 @@ describe('ChatScreen', () => {
 
   it('shows clear button when messages exist', () => {
     mockUseChat.mockReturnValue({
-      state: {
-        messages: mockMessages,
-        isLoading: false,
-        error: null,
-      },
-      loadMessages: mockLoadMessages,
-      clearMessages: mockClearMessages,
+      messages: mockMessages,
+      isLoading: false,
+      error: null,
       sendMessage: jest.fn(),
+      clearMessages: mockClearMessages,
     });
 
-    const { getByRole } = render(<ChatScreen />);
+    const { getByTestId } = render(
+      <QueryClientProvider client={queryClient}>
+        <ChatScreen />
+      </QueryClientProvider>
+    );
     
-    const clearButton = getByRole('button');
+    const clearButton = getByTestId('clear-button');
     expect(clearButton).toBeTruthy();
   });
 
   it('shows error message when error exists', () => {
     mockUseChat.mockReturnValue({
-      state: {
-        messages: [],
-        isLoading: false,
-        error: 'Network error occurred',
-      },
-      loadMessages: mockLoadMessages,
-      clearMessages: mockClearMessages,
+      messages: [],
+      isLoading: false,
+      error: 'Network error occurred',
       sendMessage: jest.fn(),
+      clearMessages: mockClearMessages,
     });
 
-    const { getByText } = render(<ChatScreen />);
+    const { getByText } = render(
+      <QueryClientProvider client={queryClient}>
+        <ChatScreen />
+      </QueryClientProvider>
+    );
     
     expect(getByText('Network error occurred')).toBeTruthy();
   });
 
-  it('calls loadMessages on mount', () => {
-    render(<ChatScreen />);
-    
-    expect(mockLoadMessages).toHaveBeenCalled();
-  });
+
 
   it('shows clear confirmation dialog when clear button is pressed', () => {
     mockUseChat.mockReturnValue({
-      state: {
-        messages: mockMessages,
-        isLoading: false,
-        error: null,
-      },
-      loadMessages: mockLoadMessages,
-      clearMessages: mockClearMessages,
+      messages: mockMessages,
+      isLoading: false,
+      error: null,
       sendMessage: jest.fn(),
+      clearMessages: mockClearMessages,
     });
 
-    const { getByRole } = render(<ChatScreen />);
+    const { getByTestId } = render(
+      <QueryClientProvider client={queryClient}>
+        <ChatScreen />
+      </QueryClientProvider>
+    );
     
-    const clearButton = getByRole('button');
+    const clearButton = getByTestId('clear-button');
     fireEvent.press(clearButton);
     
     expect(Alert.alert).toHaveBeenCalledWith(
       'Clear Chat',
-      'Are you sure you want to clear all messages? This action cannot be undone.',
+      'Are you sure you want to clear all messages?',
       expect.arrayContaining([
         expect.objectContaining({ text: 'Cancel', style: 'cancel' }),
         expect.objectContaining({ text: 'Clear', style: 'destructive' }),
@@ -156,17 +182,23 @@ describe('ChatScreen', () => {
   });
 
   it('displays suggestions in empty state', () => {
-    const { getByText } = render(<ChatScreen />);
+    const { getByText } = render(
+      <QueryClientProvider client={queryClient}>
+        <ChatScreen />
+      </QueryClientProvider>
+    );
     
     expect(getByText('Try asking:')).toBeTruthy();
     expect(getByText('• "Tell me about Pikachu"')).toBeTruthy();
-    expect(getByText('• "Show me fire-type Pokémon"')).toBeTruthy();
-    expect(getByText('• "Analyze my team: Charizard, Blastoise, Venusaur"')).toBeTruthy();
-    expect(getByText('• "Give me a random Pokémon"')).toBeTruthy();
+    expect(getByText('• 
   });
 
   it('renders ChatInput component', () => {
-    const { getByText } = render(<ChatScreen />);
+    const { getByText } = render(
+      <QueryClientProvider client={queryClient}>
+        <ChatScreen />
+      </QueryClientProvider>
+    );
     
     expect(getByText('ChatInput')).toBeTruthy();
   });

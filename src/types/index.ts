@@ -1,4 +1,3 @@
-// Core Pokemon API types
 export interface Pokemon {
   id: number;
   name: string;
@@ -55,22 +54,13 @@ export interface PokemonSpecies {
   }[];
 }
 
-// Team analysis types
 export interface PokemonTeam {
   pokemon: Pokemon[];
   name?: string;
 }
 
-export interface TeamAnalysis {
-  teamSize: number;
-  typeCoverage: string[];
-  averageStats: Record<string, number>;
-  recommendations: string[];
-  strengths: string[];
-  weaknesses: string[];
-}
 
-// Chat and messaging types
+
 export interface Message {
   id: string;
   content: string;
@@ -87,7 +77,6 @@ export interface ToolCall {
   result?: string;
 }
 
-// Tool system types
 export interface Tool {
   name: string;
   description: string;
@@ -105,5 +94,3 @@ export interface Tool {
   };
   execute: (args: any) => Promise<string>;
 }
-
-// All types are defined in this file

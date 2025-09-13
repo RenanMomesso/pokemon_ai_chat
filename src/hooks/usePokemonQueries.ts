@@ -1,93 +1,86 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { pokemonService } from '../services/PokemonService';
-import { Pokemon, PokemonSpecies, TeamAnalysis } from '../types';
-import { PokemonLookupParams, RandomPokemonParams, TeamAnalysisParams } from '../tools/types';
+import { Pokemon } from '../services/PokemonService/types';
 
-// Query keys for consistent caching
-export const pokemonQueryKeys = {
-  all: ['pokemon'] as const,
-  pokemon: (params: PokemonLookupParams) => ['pokemon', 'lookup', params] as const,
-  random: (params: RandomPokemonParams) => ['pokemon', 'random', params] as const,
-  species: (name: string) => ['pokemon', 'species', name] as const,
-  teamAnalysis: (params: TeamAnalysisParams) => ['pokemon', 'team-analysis', params] as const,
-};
-
-// Hook for searching/looking up a specific Pokemon
-export const usePokemonLookup = (params: PokemonLookupParams, enabled = true) => {
+export const usePokemonLookup = (nameOrId: string | number, enabled = true) => {
   return useQuery({
-    queryKey: pokemonQueryKeys.pokemon(params),
-    queryFn: () => pokemonService.searchPokemon(params),
-    enabled: enabled && !!params.name,
-    staleTime: 10 * 60 * 1000, // 10 minutes - Pokemon data rarely changes
-    gcTime: 30 * 60 * 1000, // 30 minutes in cache
+    queryKey: ['pokemon', 'lookup', nameOrId],
+    queryFn: () => pokemonService.fetchPokemon(nameOrId),
+    enabled: enabled && !!nameOrId,
+    staleTime: 10 * 60 * 1000,
+    gcTime: 30 * 60 * 1000,
   });
 };
 
-// Hook for getting a random Pokemon
-export const useRandomPokemon = (params: RandomPokemonParams = {}, enabled = true) => {
+export const useRandomPokemon = (enabled = true) => {
   return useQuery({
-    queryKey: pokemonQueryKeys.random(params),
-    queryFn: () => pokemonService.getRandomPokemon(params),
+    queryKey: ['pokemon', 'random'],
+    queryFn: () => {
+      const randomId = Math.floor(Math.random() * 1010) + 1;
+      return pokemonService.fetchPokemon(randomId);
+    },
     enabled,
-    staleTime: 2 * 60 * 1000, // 2 minutes - random Pokemon can be refreshed more often
-    gcTime: 5 * 60 * 1000, // 5 minutes in cache
+    staleTime: 2 * 60 * 1000,
+    gcTime: 5 * 60 * 1000,
   });
 };
 
-// Hook for getting Pokemon species information
-export const usePokemonSpecies = (name: string, enabled = true) => {
+export const usePokemonSpecies = (nameOrId: string | number, enabled = true) => {
   return useQuery({
-    queryKey: pokemonQueryKeys.species(name),
-    queryFn: () => pokemonService.getPokemonSpecies(name),
-    enabled: enabled && !!name,
-    staleTime: 15 * 60 * 1000, // 15 minutes - species data is very stable
-    gcTime: 60 * 60 * 1000, // 1 hour in cache
+    queryKey: ['pokemon', 'species', nameOrId],
+    queryFn: () => pokemonService.fetchPokemonSpecies(nameOrId),
+    enabled: enabled && !!nameOrId,
+    staleTime: 15 * 60 * 1000,
+    gcTime: 60 * 60 * 1000,
   });
 };
 
-// Hook for team analysis
-export const useTeamAnalysis = (params: TeamAnalysisParams, enabled = true) => {
+export const usePokemonType = (typeId: string | number, enabled = true) => {
   return useQuery({
-    queryKey: pokemonQueryKeys.teamAnalysis(params),
-    queryFn: () => pokemonService.analyzeTeam(params),
-    enabled: enabled && params.team && params.team.length > 0,
-    staleTime: 5 * 60 * 1000, // 5 minutes
-    gcTime: 15 * 60 * 1000, // 15 minutes in cache
+    queryKey: ['pokemon', 'type', typeId],
+    queryFn: () => pokemonService.fetchType(typeId),
+    enabled: enabled && !!typeId,
+    staleTime: 15 * 60 * 1000,
+    gcTime: 60 * 60 * 1000,
   });
 };
 
-// Mutation hook for actions that modify data (if needed in the future)
-export const usePokemonMutation = () => {
-  const queryClient = useQueryClient();
-  
-  return useMutation({
-    mutationFn: async (data: any) => {
-      // Placeholder for future mutations like saving favorite Pokemon
-      return data;
-    },
-    onSuccess: () => {
-      // Invalidate and refetch Pokemon queries
-      queryClient.invalidateQueries({ queryKey: pokemonQueryKeys.all });
-    },
+export const usePokemonAbility = (abilityName: string, enabled = true) => {
+  return useQuery({
+    queryKey: ['pokemon', 'ability', abilityName],
+    queryFn: () => pokemonService.fetchAbility(abilityName),
+    enabled: enabled && !!abilityName,
+    staleTime: 15 * 60 * 1000,
+    gcTime: 60 * 60 * 1000,
   });
 };
 
-// Utility hook to prefetch Pokemon data
+export const usePokemonList = (limit = 100000, offset = 0, enabled = true) => {
+  return useQuery({
+    queryKey: ['pokemon', 'list', limit, offset],
+    queryFn: () => pokemonService.fetchPokemonList(limit, offset),
+    enabled,
+    staleTime: 30 * 60 * 1000,
+    gcTime: 60 * 60 * 1000,
+  });
+};
+
 export const usePrefetchPokemon = () => {
   const queryClient = useQueryClient();
   
-  const prefetchPokemon = async (name: string) => {
+  const prefetchPokemon = async (nameOrId: string | number) => {
     await queryClient.prefetchQuery({
-      queryKey: pokemonQueryKeys.pokemon({ name }),
-      queryFn: () => pokemonService.searchPokemon({ name }),
+      queryKey: ['pokemon', 'lookup', nameOrId],
+      queryFn: () => pokemonService.fetchPokemon(nameOrId),
       staleTime: 10 * 60 * 1000,
     });
   };
   
   const prefetchRandomPokemon = async () => {
+    const randomId = Math.floor(Math.random() * 1010) + 1;
     await queryClient.prefetchQuery({
-      queryKey: pokemonQueryKeys.random({}),
-      queryFn: () => pokemonService.getRandomPokemon({}),
+      queryKey: ['pokemon', 'random'],
+      queryFn: () => pokemonService.fetchPokemon(randomId),
       staleTime: 2 * 60 * 1000,
     });
   };
@@ -98,8 +91,7 @@ export const usePrefetchPokemon = () => {
   };
 };
 
-// Hook to get cached Pokemon data without triggering a request
-export const useCachedPokemon = (name: string): Pokemon | undefined => {
+export const useCachedPokemon = (nameOrId: string | number): Pokemon | undefined => {
   const queryClient = useQueryClient();
-  return queryClient.getQueryData(pokemonQueryKeys.pokemon({ name }));
+  return queryClient.getQueryData(['pokemon', 'lookup', nameOrId]);
 };

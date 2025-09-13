@@ -1,7 +1,6 @@
 import { ReactNode } from 'react';
 import { Tool } from '../types';
 
-// Message types
 export interface Message {
   id: string;
   content: string;
@@ -19,7 +18,6 @@ export interface ToolCall {
   error?: string;
 }
 
-// Chat actions
 export type ChatAction =
   | { type: 'ADD_MESSAGE'; payload: Message }
   | { type: 'UPDATE_MESSAGE'; payload: { id: string; updates: Partial<Message> } }
@@ -29,14 +27,12 @@ export type ChatAction =
   | { type: 'SET_LOADING'; payload: boolean }
   | { type: 'SET_ERROR'; payload: string | null };
 
-// Chat state
 export interface ChatState {
   messages: Message[];
   isLoading: boolean;
   error: string | null;
 }
 
-// Context types
 export interface ChatContextType {
   messages: Message[];
   isLoading: boolean;
@@ -49,14 +45,12 @@ export interface ChatProviderProps {
   children: ReactNode;
 }
 
-// Storage types
 export interface StorageService {
   saveMessages: (messages: Message[]) => Promise<void>;
   loadMessages: () => Promise<Message[]>;
   clearMessages: () => Promise<void>;
 }
 
-// Chat configuration
 export interface ChatConfig {
   storageKey: string;
   maxMessages: number;
@@ -64,14 +58,12 @@ export interface ChatConfig {
   streamingDelay: number;
 }
 
-// Error types
 export interface ChatError {
   type: 'NETWORK_ERROR' | 'TOOL_ERROR' | 'STORAGE_ERROR' | 'UNKNOWN_ERROR';
   message: string;
   details?: any;
 }
 
-// Tool execution types
 export interface ToolExecutionContext {
   messageId: string;
   toolCall: ToolCall;

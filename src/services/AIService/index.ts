@@ -9,6 +9,11 @@ export type {
   AnthropicTool,
 } from './types';
 
-// Export a singleton instance
 import { AIService } from './AIService';
-export const aiService = new AIService();
+const getApiKey = () => {
+  if (process.env.NODE_ENV === 'test') {
+    return 'test-api-key';
+  }
+  return undefined;
+};
+export const aiService = new AIService(getApiKey());

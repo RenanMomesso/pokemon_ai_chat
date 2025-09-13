@@ -1,5 +1,5 @@
 export const AI_SERVICE_CONFIG = {
-  model: 'claude-3-5-sonnet-20241022',
+  model: 'claude-sonnet-4-20250514',
   maxTokens: 4096,
   systemPrompt: `You are a helpful AI assistant specialized in Pokémon knowledge. You have access to tools that can fetch Pokémon data and analyze teams. 
         

@@ -1,33 +1,31 @@
 import React from 'react';
-import { Animated, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
+import Animated from 'react-native-reanimated';
 import { useMessageBubble, useStreamingDots } from './MessageBubble.hook';
 import { styles } from './MessageBubble.styles';
 import { MessageBubbleProps } from './types';
 
 function StreamingDots() {
-  const { dot1, dot2, dot3 } = useStreamingDots();
+  const { dot1Style, dot2Style, dot3Style } = useStreamingDots();
 
   return (
     <View style={styles.dotsContainer}>
-      <Animated.View style={[styles.dot, { opacity: dot1 }]} />
-      <Animated.View style={[styles.dot, { opacity: dot2 }]} />
-      <Animated.View style={[styles.dot, { opacity: dot3 }]} />
+      <Animated.View style={[styles.dot, dot1Style]} />
+      <Animated.View style={[styles.dot, dot2Style]} />
+      <Animated.View style={[styles.dot, dot3Style]} />
     </View>
   );
 }
 
 export function MessageBubble({ message }: MessageBubbleProps) {
-  const { isUser, fadeAnim, scaleAnim, formatTime } = useMessageBubble({ message });
+  const { isUser, animatedStyle, formatTime } = useMessageBubble({ message });
 
   return (
     <Animated.View
       style={[
         styles.container,
         isUser ? styles.userContainer : styles.assistantContainer,
-        {
-          opacity: fadeAnim,
-          transform: [{ scale: scaleAnim }],
-        },
+        animatedStyle,
       ]}
     >
       <View style={[
