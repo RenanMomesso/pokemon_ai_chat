@@ -2,6 +2,12 @@
 
 An AI-powered Pokemon chatbot built with React Native, Expo, and Anthropic's Claude API. Chat with an AI assistant that has extensive knowledge about Pokemon and can help you with Pokemon-related questions!
 
+## Demo Video
+
+🎥 **[Watch the Pokemon AI Chatbot in Action](https://drive.google.com/file/d/1VDFqQ2h6ymE5GxUnKEvL1h_i4ZndSJZq/view?usp=sharing)**
+
+See how the chatbot responds to Pokemon-related questions and provides helpful information!
+
 ## Features
 
 - 🤖 AI-powered conversations using Anthropic's Claude
